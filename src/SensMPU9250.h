@@ -44,6 +44,7 @@ Thinking about a sailing yacht:
 - (Roll) ??: Is the heel angle - how far does you sail lean over to the port / starboard
 
 Here is a great explenation about how these sensors work: https://github.com/kriswiner/MPU6050/wiki/Affordable-9-DoF-Sensor-Fusion
+And Kris Winer's Repo is here: https://github.com/kriswiner/MPU9250
  */
 
 class mpu9250 : public Sensor {
@@ -52,8 +53,9 @@ class mpu9250 : public Sensor {
             uint read_delay = 1000,
             String config_path = "");
     MPU9250 myIMU;
-    uint8_t  MPU9250_ADDRESS;
-    boolean  SensorRead = false;
+    uint8_t MPU9250_ADDRESS;
+    boolean SensorRead = false;
+    uint  Read_Delay;
     void read_values(boolean AHRS);
   private:
     uint8_t addr;

@@ -25,6 +25,7 @@ int myLed  = 13;  // Set up pin 13 led for toggling
 mpu9250::mpu9250(uint8_t addr, uint Read_Delay, String config_path) :
        Sensor(config_path), 
        addr{addr},
+       Read_Delay(Read_Delay),
        MPU9250_ADDRESS(addr)
        {
     MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
@@ -35,9 +36,9 @@ mpu9250::mpu9250(uint8_t addr, uint Read_Delay, String config_path) :
       Serial.print(F("Error initializing MPU9250"));
     }
     else {
-      app.onRepeat(Read_Delay, [this](){ 
+      app.onRepeat(5, [this](){ 
         read_values(true);
-        read_values(false);
+        // read_values(false);
       });        
     }
     /*
@@ -182,7 +183,7 @@ void mpu9250::read_values(boolean AHRS)
   // On interrupt, check if data ready interrupt
   if (myIMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
   {
-    Serial.println("Interupt Set");
+    // Serial.println("Interupt Set");
     myIMU.readAccelData(myIMU.accelCount);  // Read the x/y/z adc values
 
     // Now we'll calculate the accleration value into actual g's
@@ -213,7 +214,7 @@ void mpu9250::read_values(boolean AHRS)
                * myIMU.factoryMagCalibration[2] - myIMU.magBias[2];
   } // if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
   else {
-    Serial.println("Interupt not set");
+    // Serial.println("Interupt not set");
   }
   // Must be called before updating quaternions!
   myIMU.updateTime();
@@ -232,7 +233,7 @@ void mpu9250::read_values(boolean AHRS)
 
   if (!AHRS)
   {
-    Serial.println("FALSE - AHRS");
+    // Serial.println("FALSE - AHRS");
     myIMU.delt_t = millis() - myIMU.count;
     // if (myIMU.delt_t > 500)
     // {
@@ -278,14 +279,19 @@ void mpu9250::read_values(boolean AHRS)
   } // if (!AHRS)
   else
   {
-    Serial.print("TRUE - AHRS");
+    // Serial.print("TRUE - AHRS");
     SensorRead = true;
     // Serial print and/or display at 0.5 s rate independent of data rates
     myIMU.delt_t = millis() - myIMU.count;
 
     // update LCD once per half-second independent of read rate
-    if (myIMU.delt_t > 500)
+    if (myIMU.delt_t > Read_Delay)
     {
+      Serial.print("delt_t: ");
+      Serial.print(myIMU.delt_t);
+      Serial.print(" Read_Delay: ");
+      Serial.println(Read_Delay);
+
       if(SerialDebug)
       {
         /*
