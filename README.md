@@ -73,3 +73,4 @@ https://thecavepearlproject.org/2015/05/22/calibrating-any-compass-or-accelerome
 - And here is an arduino sketch you can use to calibrate (at the bottom of this URL):
 
 https://github.com/bolderflight/MPU9250/issues/33
+
