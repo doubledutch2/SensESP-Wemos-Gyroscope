@@ -12,30 +12,28 @@
 #include "transforms/linear.h"
 #include "SensMPU9250.h"
 
-#define  I2C_ADDRESS 0x68
-// MPU9250
+#define  I2C_ADDRESS 0x68 //  Address of the MPU9280 on I2C
 /*
-#include "quaternionFilters.h"
-#include "MPU9250.h"
 
-#define AHRS false         // Set to false for basic data read
-#define SerialDebug true  // Set to true to get Serial output for debugging
+Sample code to use the MPU9250 9-Axis gyroscope largely based on 
+code written by Kris Winer (see SensMPU9250.h)
 
-// Pin definitions
-int intPin = 12;  // These can be changed, 2 and 3 are the Arduinos ext int pins
-int myLed  = 13;  // Set up pin 13 led for toggling
+Code gathers samples every 5ms, this happens in the instance of mMPU9250
+The values are then send to SignalK every read_delay ms through: mpu9250value
 
-#define I2Cclock 400000
-#define I2Cport Wire
-#define MPU9250_ADDRESS 0x68   // Use either this line or the next to select which I2C address your device is using
-//#define MPU9250_ADDRESS MPU9250_ADDRESS_AD0   // Use either this line or the next to select which I2C address your device is using
-//#define MPU9250_ADDRESS MPU9250_ADDRESS_AD1
+- MPU9250 interupts are not used
+- The Sensor is to be kept away from the MPU to avoid interference
+- Make sure youre MPU9250 is calibrated. Here are some good tutorials:
 
-void   setupMPU9250();
+https://learn.adafruit.com/adxl345-digital-accelerometer/programming
+https://thecavepearlproject.org/2015/05/22/calibrating-any-compass-or-accelerometer-for-arduino/
 
-MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
-// End MPU9250
+- And here is an arduino sketch you can use to calibrate (at the bottom of this URL):
+
+https://github.com/bolderflight/MPU9250/issues/33
+
 */
+
 ReactESP app([] () {
   #ifndef SERIAL_DEBUG_DISABLED
   Serial.begin(115200);

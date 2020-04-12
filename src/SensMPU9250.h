@@ -62,8 +62,22 @@ Y-Mag - milligauss
 Z-Mag - milligauss
 Temperature - Celsius
 
-And these measurements are obtrained every few milliseconds but then, using various algorithms
+These measurements are obtrained every few milliseconds but then, using various algorithms
 only exposed to Signal-K every "read_delay" interval
+
+Code gathers samples every 5ms, this happens in the instance of mMPU9250
+The values are then send to SignalK every read_delay ms through: mpu9250value
+
+- MPU9250 interupts are not used
+- The Sensor is to be kept away from the MPU to avoid interference
+- Make sure youre MPU9250 is calibrated. Here are some good tutorials:
+
+https://learn.adafruit.com/adxl345-digital-accelerometer/programming
+https://thecavepearlproject.org/2015/05/22/calibrating-any-compass-or-accelerometer-for-arduino/
+
+- And here is an arduino sketch you can use to calibrate (at the bottom of this URL):
+
+https://github.com/bolderflight/MPU9250/issues/33
  
  */
 

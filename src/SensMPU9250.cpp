@@ -11,17 +11,22 @@
 
 // Pin definitions
 // int intPin = 12;  // These can be changed, 2 and 3 are the Arduinos ext int pins
+
+//  Neither are used
+
 int intPin = 16;  // These can be changed, 2 and 3 are the Arduinos ext int pins
 int myLed  = 13;  // Set up pin 13 led for toggling
 
 #define I2Cclock 400000
 #define I2Cport Wire
-// #define ForceShowValues true
 
-// #define MPU9250_ADDRESS MPU9250_ADDRESS_AD0   // Use either this line or the next to select which I2C address your device is using
-//#define MPU9250_ADDRESS MPU9250_ADDRESS_AD1
-// static uint8_t MPU9250_ADDRESS=0x68;
 // mpu9250 represents 9 Axis Gyro main code from: https://learn.sparkfun.com/tutorials/mpu-9250-hookup-guide/all
+
+/*
+
+The mpu9250 Class is set up to scan the sensor every few milli seconds both AHRS Raw data
+
+*/
 mpu9250::mpu9250(uint8_t addr, uint read_delay, String config_path) :
        Sensor(config_path), 
        addr{addr},
@@ -36,122 +41,15 @@ mpu9250::mpu9250(uint8_t addr, uint read_delay, String config_path) :
       Serial.print(F("Error initializing MPU9250"));
     }
     else {
-      app.onRepeat(5, [this](){ 
-        read_values(true);
-        read_values(false);
+      app.onRepeat(5, [this](){   //  Every 5ms
+        read_values(true);        //  Get AHRS value (Altitude, Heading, Reference System)
+        read_values(false);       //  Get Raw data
       });        
     }
-    /*
-    if (ForceShowValues) {
-      app.onRepeat(5000, [this](){
-        show_results();
-      });
-    }
-    */
 }
-
-mpu9250value::mpu9250value( mpu9250* pMPU9250, 
-                            MPU9250ValType val_type, 
-                            uint read_delay, 
-                            String config_path):
-    NumericSensor(config_path), pMPU9250{pMPU9250}, val_type{val_type}, read_delay{read_delay} {
-    className = "mpu9250value";
-    load_configuration();
-}
-
-void mpu9250value::enable() {
-  
-  app.onRepeat(read_delay, [this](){
-      float tmpFloat;
-      if (val_type == yaw) {
-          output = round2Decs(pMPU9250->myIMU.yaw);
-      }
-      else if (val_type == pitch) {
-          output = round2Decs(pMPU9250->myIMU.pitch);
-      }
-      else if (val_type == roll) {
-          output = round2Decs(pMPU9250->myIMU.roll);
-      }
-      else if (val_type == xAcc) {
-          output = round2Decs(pMPU9250->myIMU.ax);
-      }
-      else if (val_type == yAcc) {
-          output = round2Decs(pMPU9250->myIMU.ay);        
-      }
-      else if (val_type == zAcc) {
-          output = round2Decs(pMPU9250->myIMU.az);
-      }
-      else if (val_type == xGyro) {
-          output = round2Decs(pMPU9250->myIMU.gx);
-      }
-      else if (val_type == yGyro) {
-          output = round2Decs(pMPU9250->myIMU.gy);
-      }
-      else if (val_type == zGyro) {
-          output = round2Decs(pMPU9250->myIMU.gz);
-      }
-      else if (val_type == xMag) {
-          output = round2Decs(pMPU9250->myIMU.mx);
-      }
-      else if (val_type == yMag) {
-          output = round2Decs(pMPU9250->myIMU.my);
-      }
-      else if (val_type == zMag) {
-          output = round2Decs(pMPU9250->myIMU.mz);        
-      }
-      else if (val_type == temperature) {
-          output = round2Decs(pMPU9250->myIMU.temperature);        
-      }
-      else output = 0.0;
-
-      notify();    //
-  });
-}
-
-float mpu9250value::round2Decs(float input) 
-{
-    float tmpFloat;
-    tmpFloat = input * 100;
-    tmpFloat = int(tmpFloat);
-    tmpFloat = tmpFloat / 100;
-    return tmpFloat;
-}
-JsonObject& mpu9250value::get_configuration(JsonBuffer& buf) {
-  JsonObject& root = buf.createObject();
-  root["read_delay"] = read_delay;
-  root["value"] = output;
-  return root;
-  };
-
-  static const char SCHEMA[] PROGMEM = R"###({
-    "type": "object",
-    "properties": {
-        "read_delay": { "title": "Read delay", "type": "number", "description": "The time, in milliseconds, between each read of the input" },
-        "value": { "title": "Last value", "type" : "number", "readOnly": true }
-    }
-  })###";
-
-
-  String mpu9250value::get_config_schema() {
-  return FPSTR(SCHEMA);
-}
-
-bool mpu9250value::set_configuration(const JsonObject& config) {
-  String expected[] = {"read_delay"};
-  for (auto str : expected) {
-    if (!config.containsKey(str)) {
-      return false;
-    }
-  }
-  read_delay = config["read_delay"];
-  return true;
-}
-
 
 boolean mpu9250::check_status() {
   Wire.begin();
-  // TWBR = 12;  // 400 kbit/sec I2C speed
-  // Serial.begin(38400);
 
   while(!Serial){};
 
@@ -470,4 +368,109 @@ void mpu9250::read_values(boolean AHRS)
       myIMU.sum = 0;
     } // if (myIMU.delt_t > 500)
   } // if (AHRS)
+}
+
+/*
+
+mpu9250 Class is used to get the Values to Signal K. You call it with one of the
+val_type (e.g. yaw) and it then reads the myIMU instance which has all the values in it
+and sends that back to SignalK
+
+*/
+mpu9250value::mpu9250value( mpu9250* pMPU9250, 
+                            MPU9250ValType val_type, 
+                            uint read_delay, 
+                            String config_path):
+    NumericSensor(config_path), pMPU9250{pMPU9250}, val_type{val_type}, read_delay{read_delay} {
+    className = "mpu9250value";
+    load_configuration();
+}
+
+void mpu9250value::enable() {
+  
+  app.onRepeat(read_delay, [this](){
+      float tmpFloat;
+      if (val_type == yaw) {
+          output = round2Decs(pMPU9250->myIMU.yaw);
+      }
+      else if (val_type == pitch) {
+          output = round2Decs(pMPU9250->myIMU.pitch);
+      }
+      else if (val_type == roll) {
+          output = round2Decs(pMPU9250->myIMU.roll);
+      }
+      else if (val_type == xAcc) {
+          output = round2Decs(pMPU9250->myIMU.ax);
+      }
+      else if (val_type == yAcc) {
+          output = round2Decs(pMPU9250->myIMU.ay);        
+      }
+      else if (val_type == zAcc) {
+          output = round2Decs(pMPU9250->myIMU.az);
+      }
+      else if (val_type == xGyro) {
+          output = round2Decs(pMPU9250->myIMU.gx);
+      }
+      else if (val_type == yGyro) {
+          output = round2Decs(pMPU9250->myIMU.gy);
+      }
+      else if (val_type == zGyro) {
+          output = round2Decs(pMPU9250->myIMU.gz);
+      }
+      else if (val_type == xMag) {
+          output = round2Decs(pMPU9250->myIMU.mx);
+      }
+      else if (val_type == yMag) {
+          output = round2Decs(pMPU9250->myIMU.my);
+      }
+      else if (val_type == zMag) {
+          output = round2Decs(pMPU9250->myIMU.mz);        
+      }
+      else if (val_type == temperature) {
+          output = round2Decs(pMPU9250->myIMU.temperature);        
+      }
+      else output = 0.0;
+
+      notify();    //
+  });
+}
+
+float mpu9250value::round2Decs(float input) 
+{
+    float tmpFloat;
+    tmpFloat = input * 100;
+    tmpFloat = int(tmpFloat);
+    tmpFloat = tmpFloat / 100;
+    return tmpFloat;
+}
+
+JsonObject& mpu9250value::get_configuration(JsonBuffer& buf) {
+  JsonObject& root = buf.createObject();
+  root["read_delay"] = read_delay;
+  root["value"] = output;
+  return root;
+  };
+
+  static const char SCHEMA[] PROGMEM = R"###({
+    "type": "object",
+    "properties": {
+        "read_delay": { "title": "Read delay", "type": "number", "description": "The time, in milliseconds, between each read of the input" },
+        "value": { "title": "Last value", "type" : "number", "readOnly": true }
+    }
+  })###";
+
+
+  String mpu9250value::get_config_schema() {
+  return FPSTR(SCHEMA);
+}
+
+bool mpu9250value::set_configuration(const JsonObject& config) {
+  String expected[] = {"read_delay"};
+  for (auto str : expected) {
+    if (!config.containsKey(str)) {
+      return false;
+    }
+  }
+  read_delay = config["read_delay"];
+  return true;
 }
