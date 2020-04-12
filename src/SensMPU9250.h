@@ -45,6 +45,26 @@ Thinking about a sailing yacht:
 
 Here is a great explenation about how these sensors work: https://github.com/kriswiner/MPU6050/wiki/Affordable-9-DoF-Sensor-Fusion
 And Kris Winer's Repo is here: https://github.com/kriswiner/MPU9250
+
+This sensor returns the following data:
+
+Yaw - Degrees
+Pitch - Degrees
+Roll - Degrees
+X-Acceleration - milli g-force
+Y-Acceleration - milli g-force
+Z-Acceleration - milli g-force
+X-Gyro - Degrees/Sec
+Y-Gyro - Degrees/Sec
+Z-Gyro - Degrees/Sec
+X-Mag - milligauss
+Y-Mag - milligauss
+Z-Mag - milligauss
+Temperature - Celsius
+
+And these measurements are obtrained every few milliseconds but then, using various algorithms
+only exposed to Signal-K every "read_delay" interval
+ 
  */
 
 class mpu9250 : public Sensor {
@@ -55,23 +75,52 @@ class mpu9250 : public Sensor {
     MPU9250 myIMU;
     uint8_t MPU9250_ADDRESS;
     boolean SensorRead = false;
-    uint  Read_Delay;
+    uint  read_delay;
     void read_values(boolean AHRS);
+    
   private:
     uint8_t addr;
     boolean check_status();
+    //  virtual JsonObject& get_configuration(JsonBuffer& buf) override;
+    //  virtual bool set_configuration(const JsonObject& config) override;
+    //  virtual String get_config_schema() override;
 };
 
 
 // Pass one of these in the constructor to MPU9250value() to tell which type of value you want to output
 //enum mpu9250ValType { temperature, pressure, humidity };
 
+enum MPU9250ValType { yaw,
+                      pitch,
+                      roll,
+                      xAcc,
+                      yAcc,
+                      zAcc,
+                      xGyro,
+                      yGyro,
+                      zGyro,
+                      xMag,
+                      yMag,
+                      zMag,
+                      temperature};
+
 // MPU9250value reads and outputs the specified value of a MPU9250 sensor.
 class mpu9250value : public NumericSensor {
   public:
+    mpu9250value( mpu9250* pMPU9250, 
+                  MPU9250ValType val_type, 
+                  uint read_delay = 500, 
+                  String config_path="");
+    void enable() override final;
+    mpu9250* pMPU9250;
 
   private:
-    
+    MPU9250ValType val_type;
+    float round2Decs(float input);
+    uint read_delay;
+    virtual JsonObject& get_configuration(JsonBuffer& buf) override;
+    virtual bool set_configuration(const JsonObject& config) override;
+    virtual String get_config_schema() override;    
 
 };
 #endif

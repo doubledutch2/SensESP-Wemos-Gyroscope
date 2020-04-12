@@ -66,29 +66,47 @@ ReactESP app([] () {
   scan_i2c();
   
   // MPU9250 myIMU(0x68, Wire, 40000);
-  auto* mMPU9250 = new mpu9250(I2C_ADDRESS,read_delay,"/ahrs/mpu9250");
+  auto* mMPU9250 = new mpu9250(I2C_ADDRESS,read_delay,"/ahrs/mpu9250"); // Create an instance of the class and start reading data. We only do that once
   
-  /*
-  auto* pCoolantTemp = new OneWireTemperature(dts, read_delay, "/coolantTemperature/oneWire");
-
-    pCoolantTemp->connectTo(new Linear(1.0, 0.0, "/coolantTemperature/linear"))
-                ->connectTo(new SKOutputNumber("propulsion.mainEngine.coolantTemperature", "/coolantTemperature/skPath"));
-
-  auto* pExhaustTemp = new OneWireTemperature(dts, read_delay, "/exhaustTemperature/oneWire");
-    
-    pExhaustTemp->connectTo(new Linear(1.0, 0.0, "/exhaustTemperature/linear"))
-                ->connectTo(new SKOutputNumber("propulsion.mainEngine.exhaustTemperature", "/exhaustTemperature/skPath"));
+  auto* pMPU9250yaw = new mpu9250value(mMPU9250, yaw, read_delay, "/motion/yaw");    
+        pMPU9250yaw->connectTo(new SKOutputNumber("vessel.motion.yaw","/yaw/skPath"));
   
-  auto* p24VTemp = new OneWireTemperature(dts, read_delay, "/24vAltTemperature/oneWire");
-      
-      p24VTemp->connectTo(new Linear(1.0, 0.0, "/24vAltTemperature/linear"))
-              ->connectTo(new SKOutputNumber("electrical.alternators.24V.temperature", "/24vAltTemperature/skPath"));
+  auto* pMPU9250pitch = new mpu9250value(mMPU9250, pitch, read_delay, "/motion/pitch");    
+        pMPU9250pitch->connectTo(new SKOutputNumber("vessel.motion.pitch","/pitch/skPath"));
 
-  auto* p12VTemp = new OneWireTemperature(dts, read_delay, "/12vAltTemperature/oneWire");
-      
-      p12VTemp->connectTo(new Linear(1.0, 0.0, "/12vAltTemperature/linear"))
-              ->connectTo(new SKOutputNumber("electrical.alternators.12V.temperature", "/12vAltTemperature/skPath"));      
-  */
+  auto* pMPU9250roll = new mpu9250value(mMPU9250, roll, read_delay, "/motion/roll");    
+        pMPU9250roll->connectTo(new SKOutputNumber("vessel.motion.roll","/yaw/skPath"));
+
+  auto* pMPU9250xAcc = new mpu9250value(mMPU9250, xAcc, read_delay, "/motion/xAcc");    
+        pMPU9250xAcc->connectTo(new SKOutputNumber("vessel.motion.xAcc","/xAcc/skPath"));
+
+  auto* pMPU9250yAcc = new mpu9250value(mMPU9250, yAcc, read_delay, "/motion/yAcc");    
+        pMPU9250yAcc->connectTo(new SKOutputNumber("vessel.motion.yAcc","/yAcc/skPath"));
+
+  auto* pMPU9250zAcc = new mpu9250value(mMPU9250, zAcc, read_delay, "/motion/zAcc");    
+        pMPU9250zAcc->connectTo(new SKOutputNumber("vessel.motion.zAcc","/zAcc/skPath"));
+
+  auto* pMPU9250xGyro = new mpu9250value(mMPU9250, xGyro, read_delay, "/motion/xGyro");    
+        pMPU9250xGyro->connectTo(new SKOutputNumber("vessel.motion.xGyro","/xGyro/skPath"));
+
+  auto* pMPU9250yGyro = new mpu9250value(mMPU9250, yGyro, read_delay, "/motion/yGyro");    
+        pMPU9250yGyro->connectTo(new SKOutputNumber("vessel.motion.yGyro","/yGyro/skPath"));
+
+  auto* pMPU9250zGyro = new mpu9250value(mMPU9250, zGyro, read_delay, "/motion/zGyro");    
+        pMPU9250zGyro->connectTo(new SKOutputNumber("vessel.motion.zGyro","/zGyro/skPath"));
+
+  auto* pMPU9250xMag = new mpu9250value(mMPU9250, xMag, read_delay, "/motion/xMag");    
+        pMPU9250xMag->connectTo(new SKOutputNumber("vessel.motion.xMag","/xMag/skPath"));
+  
+  auto* pMPU9250yMag = new mpu9250value(mMPU9250, yMag, read_delay, "/motion/yMag");    
+        pMPU9250yMag->connectTo(new SKOutputNumber("vessel.motion.yMag","/yMag/skPath"));
+
+  auto* pMPU9250zMag = new mpu9250value(mMPU9250, zMag, read_delay, "/motion/zMag");    
+        pMPU9250zMag->connectTo(new SKOutputNumber("vessel.motion.zMag","/zMag/skPath"));
+
+  auto* pMPU9250temperature = new mpu9250value(mMPU9250, temperature, read_delay, "/motion/temperature");    
+        pMPU9250temperature->connectTo(new SKOutputNumber("vessel.motion.temperature","/temperature/skPath"));
+  
 
   sensesp_app->enable();
 });
