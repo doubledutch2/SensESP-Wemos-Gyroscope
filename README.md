@@ -23,10 +23,16 @@ Leon de Beer: 12 April 2020
  10k resistors are on the EMSENSR-9250 breakout board.
 
  Hardware setup:
- MPU9250 Breakout --------- Arduino
+ MPU9250 
+ 
+ Breakout --------- Arduino
+ 
  VCC ---------------------- 3.3V
+ 
  SDA ----------------------- Check your device - Wemos D2
+ 
  SCL ----------------------- Check your device - Wemos D1
+ 
  GND ---------------------- GND
 
 Definitions
@@ -73,3 +79,4 @@ https://thecavepearlproject.org/2015/05/22/calibrating-any-compass-or-accelerome
 - And here is an arduino sketch you can use to calibrate (at the bottom of this URL):
 
 https://github.com/bolderflight/MPU9250/issues/33
+
