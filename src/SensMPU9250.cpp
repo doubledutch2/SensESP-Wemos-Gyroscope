@@ -1,10 +1,13 @@
 #include "SensMPU9250.h"
 #include "sensesp.h"
+
+/*
 #include <RemoteDebug.h>
 #include "MPU9250.h"
 #include "quaternionFilters.h"
 #include <SPI.h>
 #include <Wire.h>   
+*/
 
 // #define AHRS true         // Set to false for basic data read
 #define SerialDebug true  // Set to true to get Serial output for debugging
@@ -14,11 +17,11 @@
 
 //  Neither are used
 
-int intPin = 16;  // These can be changed, 2 and 3 are the Arduinos ext int pins
-int myLed  = 13;  // Set up pin 13 led for toggling
+//  int intPin = 16;  // These can be changed, 2 and 3 are the Arduinos ext int pins
+// int myLed  = 13;  // Set up pin 13 led for toggling
 
-#define I2Cclock 400000
-#define I2Cport Wire
+// #define I2Cclock 400000
+// #define I2Cport Wire
 
 // mpu9250 represents 9 Axis Gyro main code from: https://learn.sparkfun.com/tutorials/mpu-9250-hookup-guide/all
 
@@ -30,10 +33,11 @@ The mpu9250 Class is set up to scan the sensor every few milli seconds both AHRS
 mpu9250::mpu9250(uint8_t addr, uint read_delay, String config_path) :
        Sensor(config_path), 
        addr{addr},
-       read_delay(read_delay),
-       MPU9250_ADDRESS(addr)
+       read_delay{read_delay}
+       // MPU9250_ADDRESS(addr)
        {
-    MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
+    // MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
+    MPU9250 myIMU(addr);
 
     className = "MPU9250";
     load_configuration();
@@ -54,18 +58,21 @@ boolean mpu9250::check_status() {
   while(!Serial){};
 
   // Set up the interrupt pin, its set as active high, push-pull
+  /*
   pinMode(intPin, INPUT);
   digitalWrite(intPin, LOW);
   pinMode(myLed, OUTPUT);
   digitalWrite(myLed, HIGH);
+  */
 
   // Read the WHO_AM_I register, this is a good test of communication
-  byte c = myIMU.readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
+  byte c = myIMU.readByte(addr, WHO_AM_I_MPU9250);
   Serial.print(F("MPU9250 I AM 0x"));
   Serial.print(c, HEX);
   Serial.print(F(" I should be 0x"));
   Serial.println(0x71, HEX);
-
+  //  debugI("blabla");
+  
   if (c == 0x71) // WHO_AM_I should always be 0x71
   {
     Serial.println(F("MPU9250 is online..."));
@@ -177,7 +184,7 @@ void mpu9250::read_values(boolean AHRS)
   }
   // If intPin goes high, all data registers have new data
   // On interrupt, check if data ready interrupt
-  if (myIMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
+  if (myIMU.readByte(addr, INT_STATUS) & 0x01)
   {
     // Serial.println("Interupt Set");
     myIMU.readAccelData(myIMU.accelCount);  // Read the x/y/z adc values
@@ -270,7 +277,7 @@ void mpu9250::read_values(boolean AHRS)
 
 
       myIMU.count = millis();
-      digitalWrite(myLed, !digitalRead(myLed));  // toggle led
+      // digitalWrite(myLed, !digitalRead(myLed));  // toggle led
     } // if (myIMU.delt_t > 500)
   } // if (!AHRS)
   else

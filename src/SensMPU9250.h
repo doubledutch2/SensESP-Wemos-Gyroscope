@@ -8,6 +8,9 @@
 #include <SPI.h>
 #include <Wire.h>   
 
+#include "sensesp.h"
+
+
 /*
 PU9250 Basic Example Code
  by: Kris Winer
@@ -87,7 +90,7 @@ class mpu9250 : public Sensor {
             uint read_delay = 1000,
             String config_path = "");
     MPU9250 myIMU;
-    uint8_t MPU9250_ADDRESS;
+    // uint8_t MPU9250_ADDRESS;
     boolean SensorRead = false;
     uint  read_delay;
     void read_values(boolean AHRS);
