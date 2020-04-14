@@ -3,7 +3,7 @@
 //  #include "sensesp.h"
 
 
-#define SerialDebug true  // Set to true to get Serial output for debugging
+#define SerialDebug false  // Set to true to get Serial output for debugging
 
 // mpu9250 represents 9 Axis Gyro main code from: https://learn.sparkfun.com/tutorials/mpu-9250-hookup-guide/all
 // The mpu9250 Class is set up to scan the sensor every few milli seconds both AHRS Raw data
@@ -18,7 +18,7 @@ mpu9250::mpu9250(uint8_t addr, uint read_delay, String config_path) :
     className = "MPU9250";
     load_configuration();
     if (!check_status()) {
-      Serial.print(F("Error initializing MPU9250"));
+      debugI("Error initializing MPU9250");
     }
     else {
       app.onRepeat(5, [this](){   //  Every 5ms
@@ -35,29 +35,20 @@ boolean mpu9250::check_status() {
 
   // Read the WHO_AM_I register, this is a good test of communication
   byte c = myIMU.readByte(addr, WHO_AM_I_MPU9250);
-  Serial.print(F("MPU9250 I AM 0x"));
-  Serial.print(c, HEX);
-  Serial.print(F(" I should be 0x"));
-  Serial.println(0x71, HEX);
-
+  debugI("MPU9250 I AM 0x%x",HEX);
+  
   if (c == 0x71) // WHO_AM_I should always be 0x71
   {
-    Serial.println(F("MPU9250 is online..."));
+    debugI("MPU9250 is online...");
 
     // Start by performing self test and reporting values
     myIMU.MPU9250SelfTest(myIMU.selfTest);
-    Serial.print(F("x-axis self test: acceleration trim within : "));
-    Serial.print(myIMU.selfTest[0],1); Serial.println("% of factory value");
-    Serial.print(F("y-axis self test: acceleration trim within : "));
-    Serial.print(myIMU.selfTest[1],1); Serial.println("% of factory value");
-    Serial.print(F("z-axis self test: acceleration trim within : "));
-    Serial.print(myIMU.selfTest[2],1); Serial.println("% of factory value");
-    Serial.print(F("x-axis self test: gyration trim within : "));
-    Serial.print(myIMU.selfTest[3],1); Serial.println("% of factory value");
-    Serial.print(F("y-axis self test: gyration trim within : "));
-    Serial.print(myIMU.selfTest[4],1); Serial.println("% of factory value");
-    Serial.print(F("z-axis self test: gyration trim within : "));
-    Serial.print(myIMU.selfTest[5],1); Serial.println("% of factory value");
+    debugI("x-axis self test: acceleration trim within : %.2f%% of factory value",myIMU.selfTest[0]); 
+    debugI("y-axis self test: acceleration trim within : %.2f%% of factory value",myIMU.selfTest[1]); 
+    debugI("z-axis self test: acceleration trim within : %.2f%% of factory value",myIMU.selfTest[2]); 
+    debugI("x-axis self test: gyration trim within : %.2f%% of factory value",myIMU.selfTest[3]); 
+    debugI("y-axis self test: gyration trim within : %.2f%% of factory value",myIMU.selfTest[4]); 
+    debugI("z-axis self test: gyration trim within : %.2f%% of factory value",myIMU.selfTest[5]); 
 
     // Calibrate gyro and accelerometers, load biases in bias registers
     myIMU.calibrateMPU9250(myIMU.gyroBias, myIMU.accelBias);
@@ -65,21 +56,17 @@ boolean mpu9250::check_status() {
     myIMU.initMPU9250();
     // Initialize device for active mode read of acclerometer, gyroscope, and
     // temperature
-    Serial.println("MPU9250 initialized for active data mode....");
+    debugI("MPU9250 initialized for active data mode....");
 
     // Read the WHO_AM_I register of the magnetometer, this is a good test of
     // communication
     byte d = myIMU.readByte(AK8963_ADDRESS, WHO_AM_I_AK8963);
-    Serial.print("AK8963 ");
-    Serial.print("I AM 0x");
-    Serial.print(d, HEX);
-    Serial.print(" I should be 0x");
-    Serial.println(0x48, HEX);
+    debugI("AK8963 I AM 0x%x (should be 0x48)",HEX);
 
     if (d != 0x48)
     {
       // Communication failed, stop here
-      Serial.println(F("Communication failed, abort!"));
+      debugI("Communication failed, abort!");
       Serial.flush();
       abort();
     }
@@ -87,17 +74,14 @@ boolean mpu9250::check_status() {
     // Get magnetometer calibration from AK8963 ROM
     myIMU.initAK8963(myIMU.factoryMagCalibration);
     // Initialize device for active mode read of magnetometer
-    Serial.println("AK8963 initialized for active data mode....");
+    debugI("AK8963 initialized for active data mode....");
 
     if (SerialDebug)
     {
-      //  Serial.println("Calibration values: ");
-      Serial.print("X-Axis factory sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[0], 2);
-      Serial.print("Y-Axis factory sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[1], 2);
-      Serial.print("Z-Axis factory sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[2], 2);
+      //  debugI("Calibration values: ");
+      debugI("X-Axis factory sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[0]);
+      debugI("Y-Axis factory sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[1]);
+      debugI("Z-Axis factory sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[2]);
     }
 
     // Get sensor resolutions, only need to do this once
@@ -108,36 +92,23 @@ boolean mpu9250::check_status() {
     // The next call delays for 4 seconds, and then records about 15 seconds of
     // data to calculate bias and scale.
 
-    Serial.println("AK8963 mag biases (mG)");
-    Serial.println(myIMU.magBias[0]);
-    Serial.println(myIMU.magBias[1]);
-    Serial.println(myIMU.magBias[2]);
-
-    Serial.println("AK8963 mag scale (mG)");
-    Serial.println(myIMU.magScale[0]);
-    Serial.println(myIMU.magScale[1]);
-    Serial.println(myIMU.magScale[2]);
-
+    debugI("AK8963 mag biases (mG) %.2f %.2f %.2f",myIMU.magBias[0],myIMU.magBias[1],myIMU.magBias[2]);
+    debugI("AK8963 mag scale  (mG) %.2f %.2f %.2f",myIMU.magScale[0],myIMU.magScale[1],myIMU.magScale[2]);
+ 
     if(SerialDebug)
     {
-      Serial.println("Magnetometer:");
-      Serial.print("X-Axis sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[0], 2);
-      Serial.print("Y-Axis sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[1], 2);
-      Serial.print("Z-Axis sensitivity adjustment value ");
-      Serial.println(myIMU.factoryMagCalibration[2], 2);
+      debugI("Magnetometer:");
+      debugI("X-Axis sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[0]);
+      debugI("Y-Axis sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[1]);
+      debugI("Z-Axis sensitivity adjustment value %.2f",myIMU.factoryMagCalibration[2]);
     }
 
   } // if (c == 0x71)
   else
   {
-    Serial.print("Could not connect to MPU9250: 0x");
-    Serial.println(c, HEX);
-
+    debugI("Could not connect to MPU9250: 0x%x - Communication Failed", HEX);
     // Communication failed, stop here
-    Serial.println(F("Communication failed, abort!"));
-    Serial.flush();
+    //  Serial.flush();
     return false;
   }
   return true;
@@ -180,7 +151,7 @@ void mpu9250::read_values(boolean AHRS)
                * myIMU.factoryMagCalibration[2] - myIMU.magBias[2];
   } // if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
   else {
-    // Serial.println("Interupt not set");
+    // debugI("Interupt not set");
   }
   // Must be called before updating quaternions!
   myIMU.updateTime();
@@ -207,35 +178,25 @@ void mpu9250::read_values(boolean AHRS)
       if(SerialDebug)
       {
         // Print acceleration values in milligs!
-        Serial.print("X-acceleration: "); Serial.print(1000 * myIMU.ax);
-        Serial.print(" mg ");
-        Serial.print("Y-acceleration: "); Serial.print(1000 * myIMU.ay);
-        Serial.print(" mg ");
-        Serial.print("Z-acceleration: "); Serial.print(1000 * myIMU.az);
-        Serial.println(" mg ");
+        debugI("X-acceleration: %.2f mg",1000 * myIMU.ax);
+        debugI("Y-acceleration: %.2f mg",1000 * myIMU.ay);
+        debugI("Z-acceleration: %.2f mg",1000 * myIMU.az);
 
         // Print gyro values in degree/sec
-        Serial.print("X-gyro rate: "); Serial.print(myIMU.gx, 3);
-        Serial.print(" degrees/sec ");
-        Serial.print("Y-gyro rate: "); Serial.print(myIMU.gy, 3);
-        Serial.print(" degrees/sec ");
-        Serial.print("Z-gyro rate: "); Serial.print(myIMU.gz, 3);
-        Serial.println(" degrees/sec");
+        debugI("X-gyro rate: %.3f degrees/sec",myIMU.gx);
+        debugI("Y-gyro rate: %.3f degrees/sec",myIMU.gy);
+        debugI("Z-gyro rate: %.3f degrees/sec",myIMU.gz);
 
         // Print mag values in milligauss
-        Serial.print("X-mag field: "); Serial.print(myIMU.mx);
-        Serial.print(" mG ");
-        Serial.print("Y-mag field: "); Serial.print(myIMU.my);
-        Serial.print(" mG ");
-        Serial.print("Z-mag field: "); Serial.print(myIMU.mz);
-        Serial.println(" mG");
+        debugI("X-mag field: %.2f mG",myIMU.mx);
+        debugI("Y-mag field: %.2f mG",myIMU.my);
+        debugI("Z-mag field: %.2f mG",myIMU.mz);
 
         myIMU.tempCount = myIMU.readTempData();  // Read the adc values
         // Temperature in degrees Centigrade
         myIMU.temperature = ((float) myIMU.tempCount) / 333.87 + 21.0;
         // Print temperature in degrees Centigrade
-        Serial.print("Temperature is ");  Serial.print(myIMU.temperature, 1);
-        Serial.println(" degrees C");
+        debugI("Temperature is %.1f degrees C",myIMU.temperature);
       }
 
 
@@ -254,46 +215,47 @@ void mpu9250::read_values(boolean AHRS)
       if(SerialDebug)
       {
         /*
-        Serial.print("ax = ");  Serial.print((int)1000 * myIMU.ax);
-        Serial.print(" ay = "); Serial.print((int)1000 * myIMU.ay);
-        Serial.print(" az = "); Serial.print((int)1000 * myIMU.az);
-        Serial.println(" mg");
+        debugI("ax = ");  debugI((int)1000 * myIMU.ax);
+        debugI(" ay = "); debugI((int)1000 * myIMU.ay);
+        debugI(" az = "); debugI((int)1000 * myIMU.az);
+        debugI(" mg");
 
-        Serial.print("gx = ");  Serial.print(myIMU.gx, 2);
-        Serial.print(" gy = "); Serial.print(myIMU.gy, 2);
-        Serial.print(" gz = "); Serial.print(myIMU.gz, 2);
-        Serial.println(" deg/s");
+        debugI("gx = ");  debugI(myIMU.gx, 2);
+        debugI(" gy = "); debugI(myIMU.gy, 2);
+        debugI(" gz = "); debugI(myIMU.gz, 2);
+        debugI(" deg/s");
 
-        Serial.print("mx = ");  Serial.print((int)myIMU.mx);
-        Serial.print(" my = "); Serial.print((int)myIMU.my);
-        Serial.print(" mz = "); Serial.print((int)myIMU.mz);
-        Serial.println(" mG");
+        debugI("mx = ");  debugI((int)myIMU.mx);
+        debugI(" my = "); debugI((int)myIMU.my);
+        debugI(" mz = "); debugI((int)myIMU.mz);
+        debugI(" mG");
 
-        Serial.print("q0 = ");  Serial.print(*getQ());
-        Serial.print(" qx = "); Serial.print(*(getQ() + 1));
-        Serial.print(" qy = "); Serial.print(*(getQ() + 2));
-        Serial.print(" qz = "); Serial.println(*(getQ() + 3));
+        debugI("q0 = ");  debugI(*getQ());
+        debugI(" qx = "); debugI(*(getQ() + 1));
+        debugI(" qy = "); debugI(*(getQ() + 2));
+        debugI(" qz = "); debugI(*(getQ() + 3));
         */
       }
 
-// Define output variables from updated quaternion---these are Tait-Bryan
-// angles, commonly used in aircraft orientation. In this coordinate system,
-// the positive 
-// - z-axis is down toward Earth. 
-// - Yaw is the angle between Sensors x-axis and Earth magnetic North (or true North if corrected for local
-//   declination, looking down on the sensor positive yaw is counterclockwise.
-// - Pitch is angle between sensor x-axis and Earth ground plane, toward the
-//   Earth is positive, up toward the sky is negative. 
-// - Roll is angle between sensor y-axis and Earth ground plane, y-axis up is positive roll. These
-//   arise from the definition of the homogeneous rotation matrix constructed
-//   from quaternions. 
-// Tait-Bryan angles as well as Euler angles are non-commutative; //
-// that is, the get the correct orientation the rotations
-// must be applied in the correct order which for this configuration is yaw,
-// pitch, and then roll.
-// For more see
-// http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-// which has additional links.
+      // Define output variables from updated quaternion---these are Tait-Bryan
+      // angles, commonly used in aircraft orientation. In this coordinate system,
+      // the positive 
+      // - z-axis is down toward Earth. 
+      // - Yaw is the angle between Sensors x-axis and Earth magnetic North (or true North if corrected for local
+      //   declination, looking down on the sensor positive yaw is counterclockwise.
+      // - Pitch is angle between sensor x-axis and Earth ground plane, toward the
+      //   Earth is positive, up toward the sky is negative. 
+      // - Roll is angle between sensor y-axis and Earth ground plane, y-axis up is positive roll. These
+      //   arise from the definition of the homogeneous rotation matrix constructed
+      //   from quaternions. 
+      // Tait-Bryan angles as well as Euler angles are non-commutative; //
+      // that is, the get the correct orientation the rotations
+      // must be applied in the correct order which for this configuration is yaw,
+      // pitch, and then roll.
+      // For more see
+      // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+      // which has additional links.
+
       myIMU.yaw   = atan2(2.0f * (*(getQ()+1) * *(getQ()+2) + *getQ()
                     * *(getQ()+3)), *getQ() * *getQ() + *(getQ()+1)
                     * *(getQ()+1) - *(getQ()+2) * *(getQ()+2) - *(getQ()+3)
@@ -315,17 +277,11 @@ void mpu9250::read_values(boolean AHRS)
 
       if(SerialDebug)
       {
-        Serial.print("Yaw (Angle between X-Axis and Magnetic North): ");
-        Serial.println(myIMU.yaw, 2);
-
-        Serial.print("Pitch (Angle between X-Axis and Earth Ground Plane): ");
-        Serial.println(myIMU.pitch, 2);
-
-        Serial.print("Roll (Angle beween Y-Axis and Earth Ground Plane): ");
-        Serial.println(myIMU.roll, 2);
+        debugI("Yaw (Angle between X-Axis and Magnetic North)      : %.2f",myIMU.yaw);
+        debugI("Pitch (Angle between X-Axis and Earth Ground Plane): %.2f",myIMU.pitch);
+        debugI("Roll (Angle beween Y-Axis and Earth Ground Plane)  : %.2f",myIMU.roll);
 
       }
-
 
       myIMU.count = millis();
       myIMU.sumCount = 0;
@@ -370,48 +326,6 @@ void mpu9250value::enable() {
         default:              output = 0.0;                                     break;
 
       }
-/*      
-      if (val_type == yaw) { 
-          output = round2Decs(pMPU9250->myIMU.yaw);
-      }
-      else if (val_type == pitch) {
-          output = round2Decs(pMPU9250->myIMU.pitch);
-      }
-      else if (val_type == roll) {
-          output = round2Decs(pMPU9250->myIMU.roll);
-      }
-      else if (val_type == xAcc) {
-          output = round2Decs(pMPU9250->myIMU.ax);
-      }
-      else if (val_type == yAcc) {
-          output = round2Decs(pMPU9250->myIMU.ay);        
-      }
-      else if (val_type == zAcc) {
-          output = round2Decs(pMPU9250->myIMU.az);
-      }
-      else if (val_type == xGyro) {
-          output = round2Decs(pMPU9250->myIMU.gx);
-      }
-      else if (val_type == yGyro) {
-          output = round2Decs(pMPU9250->myIMU.gy);
-      }
-      else if (val_type == zGyro) {
-          output = round2Decs(pMPU9250->myIMU.gz);
-      }
-      else if (val_type == xMag) {
-          output = round2Decs(pMPU9250->myIMU.mx);
-      }
-      else if (val_type == yMag) {
-          output = round2Decs(pMPU9250->myIMU.my);
-      }
-      else if (val_type == zMag) {
-          output = round2Decs(pMPU9250->myIMU.mz);        
-      }
-      else if (val_type == temperature) {
-          output = round2Decs(pMPU9250->myIMU.temperature);        
-      }
-      else output = 0.0;
-*/
       notify();    //
   });
 }
