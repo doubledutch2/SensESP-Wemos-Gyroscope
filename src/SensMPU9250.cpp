@@ -1,42 +1,18 @@
 #include "SensMPU9250.h"
-#include "sensesp.h"
+// #include <RemoteDebug.h> 
+//  #include "sensesp.h"
 
-/*
-#include <RemoteDebug.h>
-#include "MPU9250.h"
-#include "quaternionFilters.h"
-#include <SPI.h>
-#include <Wire.h>   
-*/
 
-// #define AHRS true         // Set to false for basic data read
 #define SerialDebug true  // Set to true to get Serial output for debugging
 
-// Pin definitions
-// int intPin = 12;  // These can be changed, 2 and 3 are the Arduinos ext int pins
-
-//  Neither are used
-
-//  int intPin = 16;  // These can be changed, 2 and 3 are the Arduinos ext int pins
-// int myLed  = 13;  // Set up pin 13 led for toggling
-
-// #define I2Cclock 400000
-// #define I2Cport Wire
-
 // mpu9250 represents 9 Axis Gyro main code from: https://learn.sparkfun.com/tutorials/mpu-9250-hookup-guide/all
+// The mpu9250 Class is set up to scan the sensor every few milli seconds both AHRS Raw data
 
-/*
-
-The mpu9250 Class is set up to scan the sensor every few milli seconds both AHRS Raw data
-
-*/
 mpu9250::mpu9250(uint8_t addr, uint read_delay, String config_path) :
        Sensor(config_path), 
        addr{addr},
        read_delay{read_delay}
-       // MPU9250_ADDRESS(addr)
        {
-    // MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
     MPU9250 myIMU(addr);
 
     className = "MPU9250";
@@ -57,22 +33,13 @@ boolean mpu9250::check_status() {
 
   while(!Serial){};
 
-  // Set up the interrupt pin, its set as active high, push-pull
-  /*
-  pinMode(intPin, INPUT);
-  digitalWrite(intPin, LOW);
-  pinMode(myLed, OUTPUT);
-  digitalWrite(myLed, HIGH);
-  */
-
   // Read the WHO_AM_I register, this is a good test of communication
   byte c = myIMU.readByte(addr, WHO_AM_I_MPU9250);
   Serial.print(F("MPU9250 I AM 0x"));
   Serial.print(c, HEX);
   Serial.print(F(" I should be 0x"));
   Serial.println(0x71, HEX);
-  //  debugI("blabla");
-  
+
   if (c == 0x71) // WHO_AM_I should always be 0x71
   {
     Serial.println(F("MPU9250 is online..."));
@@ -140,7 +107,7 @@ boolean mpu9250::check_status() {
 
     // The next call delays for 4 seconds, and then records about 15 seconds of
     // data to calculate bias and scale.
-//    myIMU.magCalMPU9250(myIMU.magBias, myIMU.magScale);
+
     Serial.println("AK8963 mag biases (mG)");
     Serial.println(myIMU.magBias[0]);
     Serial.println(myIMU.magBias[1]);
@@ -150,7 +117,6 @@ boolean mpu9250::check_status() {
     Serial.println(myIMU.magScale[0]);
     Serial.println(myIMU.magScale[1]);
     Serial.println(myIMU.magScale[2]);
-//    delay(2000); // Add delay to see results before serial spew of data
 
     if(SerialDebug)
     {
@@ -179,14 +145,11 @@ boolean mpu9250::check_status() {
 
 void mpu9250::read_values(boolean AHRS)
 {
-  if (SerialDebug) {
-    // Serial.println("read_sensors");
-  }
+
   // If intPin goes high, all data registers have new data
   // On interrupt, check if data ready interrupt
   if (myIMU.readByte(addr, INT_STATUS) & 0x01)
   {
-    // Serial.println("Interupt Set");
     myIMU.readAccelData(myIMU.accelCount);  // Read the x/y/z adc values
 
     // Now we'll calculate the accleration value into actual g's
@@ -236,7 +199,7 @@ void mpu9250::read_values(boolean AHRS)
 
   if (!AHRS)
   {
-    // Serial.println("FALSE - AHRS");
+ 
     myIMU.delt_t = millis() - myIMU.count;
     if (myIMU.delt_t > read_delay)
     {
@@ -277,14 +240,11 @@ void mpu9250::read_values(boolean AHRS)
 
 
       myIMU.count = millis();
-      // digitalWrite(myLed, !digitalRead(myLed));  // toggle led
     } // if (myIMU.delt_t > 500)
   } // if (!AHRS)
   else
   {
-    // Serial.print("TRUE - AHRS");
     SensorRead = true;
-    // Serial print and/or display at 0.5 s rate independent of data rates
     myIMU.delt_t = millis() - myIMU.count;
 
     // update LCD once per half-second independent of read rate
@@ -364,9 +324,6 @@ void mpu9250::read_values(boolean AHRS)
         Serial.print("Roll (Angle beween Y-Axis and Earth Ground Plane): ");
         Serial.println(myIMU.roll, 2);
 
-        // Serial.print("rate = ");
-        // Serial.print((float)myIMU.sumCount / myIMU.sum, 2);
-        // Serial.println(" Hz");
       }
 
 
@@ -396,8 +353,25 @@ mpu9250value::mpu9250value( mpu9250* pMPU9250,
 void mpu9250value::enable() {
   
   app.onRepeat(read_delay, [this](){
-      float tmpFloat;
-      if (val_type == yaw) {
+      switch (val_type) {
+        case (yaw):           output = round2Decs(pMPU9250->myIMU.yaw);         break;
+        case (pitch):         output = round2Decs(pMPU9250->myIMU.pitch);       break;
+        case (roll):          output = round2Decs(pMPU9250->myIMU.roll);        break;
+        case (xAcc):          output = round2Decs(pMPU9250->myIMU.ax);          break;
+        case (yAcc):          output = round2Decs(pMPU9250->myIMU.ay);          break;    
+        case (zAcc):          output = round2Decs(pMPU9250->myIMU.az);          break;
+        case (xGyro):         output = round2Decs(pMPU9250->myIMU.gx);          break;
+        case (yGyro):         output = round2Decs(pMPU9250->myIMU.gy);          break;
+        case (zGyro):         output = round2Decs(pMPU9250->myIMU.gz);          break;
+        case (xMag):          output = round2Decs(pMPU9250->myIMU.mx);          break;
+        case (yMag):          output = round2Decs(pMPU9250->myIMU.my);          break;
+        case (zMag):          output = round2Decs(pMPU9250->myIMU.mz);          break;       
+        case (temperature):   output = round2Decs(pMPU9250->myIMU.temperature); break;
+        default:              output = 0.0;                                     break;
+
+      }
+/*      
+      if (val_type == yaw) { 
           output = round2Decs(pMPU9250->myIMU.yaw);
       }
       else if (val_type == pitch) {
@@ -437,7 +411,7 @@ void mpu9250value::enable() {
           output = round2Decs(pMPU9250->myIMU.temperature);        
       }
       else output = 0.0;
-
+*/
       notify();    //
   });
 }

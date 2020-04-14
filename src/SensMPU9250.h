@@ -7,7 +7,6 @@
 #include "sensors/sensor.h"
 #include <SPI.h>
 #include <Wire.h>   
-
 #include "sensesp.h"
 
 
