@@ -8,7 +8,7 @@
 //  #include "sensors/onewire_temperature.h"
 #include "signalk/signalk_output.h"
 #include "wiring_helpers.h"
-#include "sensors/i2c_tools.h"
+#include "i2c_tools.h"
 #include "transforms/linear.h"
 #include "SensMPU9250.h"
 
@@ -47,7 +47,7 @@ ReactESP app([] () {
   #endif
 
   boolean disableSystemSensors = true;
-  sensesp_app = new SensESPApp(disableSystemSensors);
+  sensesp_app = new SensESPApp(noStdSensors);
 
   //  setupMPU9250();
 
